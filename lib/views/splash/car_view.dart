@@ -1,15 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
 import '../../widgets/logo_widget.dart';
+import '../../features/auth/providers/auth_provider.dart';
 
-class CarView extends StatefulWidget {
-  const CarView({super.key});
+class SplashView extends StatefulWidget {
+  const SplashView({super.key});
 
   @override
-  State<CarView> createState() => _CarViewState();
+  State<SplashView> createState() => _SplashViewState();
 }
 
-class _CarViewState extends State<CarView> with SingleTickerProviderStateMixin {
+class _SplashViewState extends State<SplashView>
+    with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _fadeAnimation;
   late Animation<Offset> _slideAnimation;
@@ -31,6 +34,18 @@ class _CarViewState extends State<CarView> with SingleTickerProviderStateMixin {
     ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOut));
 
     _controller.forward();
+
+    _checkLogin();
+  }
+
+  Future<void> _checkLogin() async {
+    await Future.delayed(const Duration(milliseconds: 800));
+
+    final auth = Provider.of<AuthProvider>(context, listen: false);
+
+    if (auth.isAuthenticated) {
+      context.go('/home');
+    }
   }
 
   @override
@@ -39,106 +54,121 @@ class _CarViewState extends State<CarView> with SingleTickerProviderStateMixin {
     super.dispose();
   }
 
-  void _navigateWithAnimation(String route) {
-    // أنيميشن خروج ناعم قبل الانتقال
-    _controller.reverse().then((_) {
-      context.go(route);
-    });
+  void _animateAndGo(String route) {
+    _controller.reverse().then((_) => context.go(route));
   }
 
   @override
   Widget build(BuildContext context) {
+    final height = MediaQuery.of(context).size.height;
     final theme = Theme.of(context);
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Colors.black,
       body: SafeArea(
         child: Stack(
           children: [
-            // خلفية الصورة
             Positioned.fill(
               child: Image.asset(
                 'assets/images/cd2018.jpg',
                 fit: BoxFit.cover,
-                color: Colors.black.withOpacity(0.3),
+                color: Colors.black.withOpacity(0.35),
                 colorBlendMode: BlendMode.darken,
               ),
             ),
 
-            // محتوى الصفحة
             FadeTransition(
               opacity: _fadeAnimation,
               child: SlideTransition(
                 position: _slideAnimation,
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const LogoWidget(),
-                    const SizedBox(height: 25),
-                    Text(
-                      'Welcome to JoCar',
-                      style: theme.textTheme.headlineSmall?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                        shadows: [
-                          Shadow(
-                            offset: Offset(0, 2),
-                            blurRadius: 4,
-                            color: Colors.black45,
+                child: Align(
+                  alignment: Alignment.center,
+                  child: SingleChildScrollView(
+                    physics: const BouncingScrollPhysics(),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 20,
+                        vertical: 20,
+                      ),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const LogoWidget(),
+
+                          SizedBox(height: height * 0.03),
+
+                          Text(
+                            'Welcome to JoCar',
+                            textAlign: TextAlign.center,
+                            style: theme.textTheme.headlineMedium?.copyWith(
+                              fontWeight: FontWeight.w900,
+                              color: Colors.white,
+                              height: 1.3,
+                              shadows: const [
+                                Shadow(
+                                  offset: Offset(0, 2),
+                                  blurRadius: 6,
+                                  color: Colors.black45,
+                                ),
+                              ],
+                            ),
+                          ),
+
+                          const SizedBox(height: 12),
+
+                          Text(
+                            'Your premium car rental experience',
+                            textAlign: TextAlign.center,
+                            style: theme.textTheme.bodyLarge?.copyWith(
+                              color: Colors.white70,
+                              fontSize: 17,
+                              height: 1.4,
+                            ),
+                          ),
+
+                          SizedBox(height: height * 0.06),
+
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 40),
+                            child: ElevatedButton(
+                              onPressed: () => _animateAndGo('/login'),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFFFDD853),
+                                foregroundColor: Colors.black,
+                                minimumSize: const Size(double.infinity, 55),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(18),
+                                ),
+                                elevation: 8,
+                                shadowColor: Colors.black45,
+                              ),
+                              child: const Text(
+                                'Get Started',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 18,
+                                ),
+                              ),
+                            ),
+                          ),
+
+                          const SizedBox(height: 18),
+
+                          TextButton(
+                            onPressed: () => _animateAndGo('/register'),
+                            child: const Text(
+                              'Create an Account',
+                              style: TextStyle(
+                                color: Colors.white70,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
+                              ),
+                            ),
                           ),
                         ],
                       ),
                     ),
-                    const SizedBox(height: 10),
-                    Text(
-                      'Your premium car rental experience',
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        color: Colors.white70,
-                        fontSize: 16,
-                      ),
-                    ),
-                    const SizedBox(height: 60),
-
-                    // زر Get Started
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 40),
-                      child: ElevatedButton(
-                        onPressed: () => _navigateWithAnimation('/login'),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFFFDD853),
-                          foregroundColor: Colors.black,
-                          minimumSize: const Size(double.infinity, 55),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(15),
-                          ),
-                          elevation: 6,
-                          shadowColor: Colors.black45,
-                        ),
-                        child: const Text(
-                          'Get Started',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                    ),
-
-                    const SizedBox(height: 20),
-
-                    // زر Create an Account
-                    TextButton(
-                      onPressed: () => _navigateWithAnimation('/register'),
-                      child: const Text(
-                        'Create an Account',
-                        style: TextStyle(
-                          color: Colors.white70,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 15,
-                        ),
-                      ),
-                    ),
-                  ],
+                  ),
                 ),
               ),
             ),

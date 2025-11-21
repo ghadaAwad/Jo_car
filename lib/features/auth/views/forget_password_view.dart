@@ -81,14 +81,14 @@ class _ForgetPasswordViewState extends State<ForgetPasswordView> {
                         child: ElevatedButton(
                           onPressed: () async {
                             if (_formKey.currentState!.validate()) {
-                              // محاكاة إرسال OTP عبر AuthProvider
+                          
                               await auth.login(
                                 _emailController.text,
-                                'dummy', // مؤقت فقط
+                                'dummy', 
                               );
 
                               if (context.mounted) {
-                                context.push('/otp'); // الانتقال للـ OTP
+                                context.push('/otp');
                               }
                             }
                           },

@@ -80,10 +80,10 @@ class _OtpVerificationViewState extends State<OtpVerificationView> {
                         child: ElevatedButton(
                           onPressed: () async {
                             if (_formKey.currentState!.validate()) {
-                              // محاكاة تحقق OTP
+                           
                               await Future.delayed(
                                 const Duration(seconds: 1),
-                              ); // API later
+                              );
 
                               if (context.mounted) {
                                 ScaffoldMessenger.of(context).showSnackBar(
@@ -93,7 +93,7 @@ class _OtpVerificationViewState extends State<OtpVerificationView> {
                                 );
                                 context.go(
                                   '/login',
-                                ); // العودة لصفحة تسجيل الدخول
+                                ); 
                               }
                             }
                           },
@@ -121,10 +121,10 @@ class _OtpVerificationViewState extends State<OtpVerificationView> {
                       const SizedBox(height: 20),
                       TextButton(
                         onPressed: () async {
-                          // محاكاة إعادة إرسال OTP
+                         
                           await Future.delayed(
                             const Duration(seconds: 1),
-                          ); // API later
+                          ); 
                           if (context.mounted) {
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(

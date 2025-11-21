@@ -1,0 +1,46 @@
+{
+  "project_info": {
+    "project_number": "404648324583",
+    "project_id": "jocar97",
+    "storage_bucket": "jocar97.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:404648324583:android:0058e13fd6188dcaada142",
+        "android_client_info": {
+          "package_name": "com.example.jo_car"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "404648324583-87k1cgl8d6hbo7he7kh57epc486epll3.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDKIknGif_rXb4FuB5peOReSwKFXNhl3pc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "404648324583-87k1cgl8d6hbo7he7kh57epc486epll3.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "404648324583-n3q19il4f4ad8cf55riaecr1k4hcbeo2.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.joCar"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -1,4 +1,5 @@
 class UserModel {
+  final String? id;
   final String firstName;
   final String lastName;
   final String email;
@@ -10,6 +11,7 @@ class UserModel {
   final String type; // user / provider
 
   const UserModel({
+    this.id,
     required this.firstName,
     required this.lastName,
     required this.email,
@@ -23,29 +25,32 @@ class UserModel {
 
   String get fullName => '$firstName $lastName';
 
-  factory UserModel.fromJson(Map<String, dynamic> json) {
-    return UserModel(
-      firstName: json['first_name'] ?? '',
-      lastName: json['last_name'] ?? '',
-      email: json['email'] ?? '',
-      phone: json['phone'] ?? '',
-      address: json['address'] ?? '',
-      city: json['city'] ?? '',
-      username: json['username'] ?? '',
-      password: json['password'] ?? '',
-      type: json['type'] ?? 'user',
-    );
+  Map<String, dynamic> toMap() {
+    return {
+      'first_name': firstName,
+      'last_name': lastName,
+      'email': email,
+      'phone': phone,
+      'address': address,
+      'city': city,
+      'username': username,
+      'password': password,
+      'type': type,
+    };
   }
 
-  Map<String, dynamic> toJson() => {
-    'first_name': firstName,
-    'last_name': lastName,
-    'email': email,
-    'phone': phone,
-    'address': address,
-    'city': city,
-    'username': username,
-    'password': password,
-    'type': type,
-  };
+  factory UserModel.fromFirestore(Map<String, dynamic> data, String id) {
+    return UserModel(
+      id: id,
+      firstName: data['first_name'] ?? '',
+      lastName: data['last_name'] ?? '',
+      email: data['email'] ?? '',
+      phone: data['phone'] ?? '',
+      address: data['address'] ?? '',
+      city: data['city'] ?? '',
+      username: data['username'] ?? '',
+      password: data['password'] ?? '',
+      type: data['type'] ?? 'user',
+    );
+  }
 }

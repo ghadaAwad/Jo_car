@@ -53,7 +53,6 @@ class _LoginViewState extends State<LoginView> {
                         ),
                         const SizedBox(height: 50),
 
-                        // Email
                         TextFormField(
                           controller: _emailController,
                           keyboardType: TextInputType.emailAddress,
@@ -75,7 +74,6 @@ class _LoginViewState extends State<LoginView> {
                         ),
                         const SizedBox(height: 10),
 
-                        // Password
                         TextFormField(
                           controller: _passwordController,
                           obscureText: true,
@@ -158,6 +156,62 @@ class _LoginViewState extends State<LoginView> {
                           ),
                         ),
                         const SizedBox(height: 20),
+
+                        const SizedBox(height: 20),
+                        SizedBox(
+                          height: 50,
+                          width: 300,
+                          child: OutlinedButton.icon(
+                            onPressed: () async {
+                              final auth = context.read<AuthProvider>();
+
+                              try {
+                                await auth.signInWithGoogle();
+
+                                if (auth.isAuthenticated) {
+                                  context.go('/home');
+                                }
+                              } catch (e) {
+                                if (e.toString().contains("NO_ACCOUNT")) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text(
+                                        "هذا الحساب غير مسجل. يرجى إنشاء حساب أولاً.",
+                                      ),
+                                    ),
+                                  );
+                                } else {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text(
+                                        "فشل تسجيل الدخول عبر Google.",
+                                      ),
+                                    ),
+                                  );
+                                }
+                              }
+                            },
+
+                            icon: Image.asset(
+                              'assets/images/google_logo.png',
+                              height: 24,
+                              width: 24,
+                            ),
+                            label: const Text(
+                              'Sign in with Google',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: Colors.black,
+                              ),
+                            ),
+                            style: OutlinedButton.styleFrom(
+                              side: const BorderSide(color: Colors.grey),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                            ),
+                          ),
+                        ),
 
                         Row(
                           mainAxisAlignment: MainAxisAlignment.center,

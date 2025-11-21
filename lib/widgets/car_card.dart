@@ -1,140 +1,145 @@
 import 'package:flutter/material.dart';
 import '../models/car.dart';
-import '../core/config/app_colors.dart';
 
 class CarCard extends StatelessWidget {
   final Car car;
+  final bool isRented;
+  final bool showAvailability;
   final VoidCallback onTap;
-  final VoidCallback onArrowTap;
+  final VoidCallback? onArrowTap;
 
   const CarCard({
     super.key,
     required this.car,
     required this.onTap,
-    required this.onArrowTap,
+    this.onArrowTap,
+    this.isRented = false,
+    this.showAvailability = true,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      elevation: 0,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(22),
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.all(14.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              ClipRRect(
-                borderRadius: BorderRadius.circular(16),
-                child: AspectRatio(
-                  aspectRatio: 16 / 9,
-                  child: Image.network(
-                    car.imageUrl,
-                    fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) => Container(
-                      color: Colors.grey[200],
-                      alignment: Alignment.center,
-                      child: const Icon(Icons.image_not_supported, size: 60),
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 190, // 🔥 تصغير الكارد آمن
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(18),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Stack(
+          children: [
+            Column(
+              children: [
+                // 🔥 إصلاح السايز بشكل نهائي ومنع أي overflow
+                ClipRRect(
+                  borderRadius: const BorderRadius.vertical(
+                    top: Radius.circular(18),
+                  ),
+                  child: AspectRatio(
+                    aspectRatio: 16 / 11, // 🔥 ثابت ويمنع التمدد
+                    child: Image.network(
+                      car.imageUrl ?? "",
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) => Container(
+                        color: Colors.grey[200],
+                        child: const Icon(Icons.car_crash, size: 40),
+                      ),
+                    ),
+                  ),
+                ),
+
+                // النصوص
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 10,
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        "${car.make} ${car.model}",
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w800,
+                          fontSize: 14,
+                        ),
+                      ),
+
+                      const SizedBox(height: 4),
+
+                      Text(
+                        "\$${car.daily_rate} / day",
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: Colors.orange,
+                          fontSize: 13,
+                        ),
+                      ),
+
+                      const SizedBox(height: 8),
+
+                      // Availability يظهر فقط للصفحات اللي مش home
+                      if (showAvailability)
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 5,
+                          ),
+                          decoration: BoxDecoration(
+                            color: isRented
+                                ? Colors.red.withOpacity(0.10)
+                                : Colors.green.withOpacity(0.12),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Text(
+                            isRented ? "Rented" : "Available",
+                            style: TextStyle(
+                              color: isRented ? Colors.red : Colors.green,
+                              fontSize: 11,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+
+            // سهم البروفايدر
+            if (onArrowTap != null)
+              Positioned(
+                right: 10,
+                top: 10,
+                child: InkWell(
+                  onTap: onArrowTap,
+                  borderRadius: BorderRadius.circular(50),
+                  child: Container(
+                    padding: const EdgeInsets.all(6),
+                    decoration: BoxDecoration(
+                      color: Colors.black.withOpacity(0.45),
+                      borderRadius: BorderRadius.circular(50),
+                    ),
+                    child: const Icon(
+                      Icons.arrow_forward_ios_rounded,
+                      color: Colors.white,
+                      size: 15,
                     ),
                   ),
                 ),
               ),
-              const SizedBox(height: 12),
-
-              Row(
-                children: [
-                  const Icon(
-                    Icons.shield_outlined,
-                    size: 18,
-                    color: AppColors.textSecondary,
-                  ),
-                  const SizedBox(width: 6),
-                  Text(
-                    car.make,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.textSecondary,
-                      fontSize: 12,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 6),
-
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  Expanded(
-                    child: Text(
-                      '${car.model} ${car.year}',
-                      style: const TextStyle(
-                        fontWeight: FontWeight.w800,
-                        fontSize: 18,
-                      ),
-                    ),
-                  ),
-                  _ArrowButton(onTap: onArrowTap),
-                ],
-              ),
-              const SizedBox(height: 8),
-
-              Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 6,
-                    ),
-                    decoration: BoxDecoration(
-                      color: AppColors.sunYellow,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Text(
-                      '\$${car.daily_rate} / day',
-                      style: const TextStyle(
-                        fontWeight: FontWeight.w800,
-                        fontSize: 12,
-                      ),
-                    ),
-                  ),
-                  const Spacer(),
-                  const Icon(
-                    Icons.local_gas_station_outlined,
-                    size: 16,
-                    color: AppColors.sunYellow,
-                  ),
-                  const SizedBox(width: 4),
-                  Text(car.fuel_type, style: const TextStyle(fontSize: 12)),
-                ],
-              ),
-            ],
-          ),
+          ],
         ),
-      ),
-    );
-  }
-}
-
-class _ArrowButton extends StatelessWidget {
-  final VoidCallback onTap;
-  const _ArrowButton({required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    return InkResponse(
-      onTap: onTap,
-      radius: 24,
-      child: Container(
-        width: 36,
-        height: 36,
-        decoration: BoxDecoration(
-          color: AppColors.sunYellow,
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: const Icon(Icons.arrow_forward_rounded),
       ),
     );
   }

@@ -1,17 +1,56 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
-import '../../../core/config/app_colors.dart';
-import '../../../features/auth/providers/auth_provider.dart';
-import '../../../widgets/custom_bottom_nav.dart';
 
-class ProfileView extends StatelessWidget {
+import '../../../core/config/app_colors.dart';
+import '../providers/auth_provider.dart';
+import '../../../views/booking/user_booking_page.dart';
+import 'edit_profile_view.dart';
+import 'help_center_view.dart';
+
+class ProfileView extends StatefulWidget {
   const ProfileView({super.key});
+
+  @override
+  State<ProfileView> createState() => _ProfileViewState();
+}
+
+class _ProfileViewState extends State<ProfileView>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _fade;
+  late Animation<double> _scale;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 600),
+    );
+    _fade = CurvedAnimation(parent: _controller, curve: Curves.easeOut);
+    _scale = CurvedAnimation(parent: _controller, curve: Curves.elasticOut);
+    _controller.forward();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     final auth = Provider.of<AuthProvider>(context);
-    final email = auth.userEmail ?? 'unknown@email.com';
+    final user = auth.user ?? {};
+    final firstName = user['firstName'] ?? '';
+    final lastName = user['lastName'] ?? '';
+    final fullName = '$firstName $lastName'.trim().isEmpty
+        ? 'User'
+        : '$firstName $lastName'.trim();
+    final email = auth.userEmail ?? 'email@example.com';
+    final phone = user['phone'] ?? 'Not set';
+    final photoUrl = (user['photoUrl'] ?? '')?.toString();
 
     return Scaffold(
       backgroundColor: AppColors.bg,
@@ -27,83 +66,170 @@ class ProfileView extends StatelessWidget {
         elevation: 1,
         centerTitle: true,
       ),
-
-      body: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            const SizedBox(height: 30),
-            const CircleAvatar(
-              radius: 55,
-              backgroundImage: AssetImage('assets/images/profile.jpg'),
-            ),
-            const SizedBox(height: 20),
-            const Text(
-              'John Smith',
-              style: TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.bold,
-                color: AppColors.textPrimary,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              email,
-              style: const TextStyle(
-                fontSize: 14,
-                color: AppColors.textSecondary,
-              ),
-            ),
-            const SizedBox(height: 30),
-
-            // User info
-            _infoTile(Icons.phone_android, 'Phone', '+962 79 123 4567'),
-            _infoTile(Icons.location_on_outlined, 'City', 'Amman, Jordan'),
-            const SizedBox(height: 25),
-
-            // Logout button
-            ElevatedButton.icon(
-              onPressed: () async {
-                final auth = Provider.of<AuthProvider>(context, listen: false);
-                await auth.logout();
-                if (context.mounted) {
-                  context.go('/car'); // يرجع لصفحة الـ Splash
-                }
-              },
-              icon: const Icon(Icons.logout, color: Colors.black),
-              label: const Text(
-                'Logout',
-                style: TextStyle(
-                  color: Colors.black,
-                  fontWeight: FontWeight.bold,
+      body: FadeTransition(
+        opacity: _fade,
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            children: [
+              // صورة البروفايل + الاسم
+              ScaleTransition(
+                scale: _scale,
+                child: Column(
+                  children: [
+                    GestureDetector(
+                      onTap: () async {
+                        await Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const EditProfileView(),
+                          ),
+                        );
+                        setState(() {}); // إعادة بناء بعد الرجوع
+                      },
+                      child: Stack(
+                        children: [
+                          CircleAvatar(
+                            radius: 50,
+                            backgroundColor: Colors.grey.shade300,
+                            backgroundImage:
+                                (photoUrl != null && photoUrl.trim().isNotEmpty)
+                                ? NetworkImage(photoUrl)
+                                : null,
+                            child: (photoUrl == null || photoUrl.trim().isEmpty)
+                                ? const Icon(
+                                    Icons.person,
+                                    size: 60,
+                                    color: Colors.white,
+                                  )
+                                : null,
+                          ),
+                          Positioned(
+                            right: 0,
+                            bottom: 0,
+                            child: Container(
+                              padding: const EdgeInsets.all(6),
+                              decoration: const BoxDecoration(
+                                color: AppColors.sunYellow,
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(
+                                Icons.camera_alt_rounded,
+                                size: 18,
+                                color: Colors.black,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+                    Text(
+                      fullName,
+                      style: const TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      email,
+                      style: const TextStyle(
+                        fontSize: 13,
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      phone,
+                      style: const TextStyle(
+                        fontSize: 13,
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                  ],
                 ),
               ),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.sunYellow,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                minimumSize: const Size(double.infinity, 50),
+
+              const SizedBox(height: 28),
+
+              _menuItem(
+                icon: Icons.settings_outlined,
+                title: 'Account Settings',
+                onTap: () async {
+                  await Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const EditProfileView()),
+                  );
+                  setState(() {});
+                },
               ),
-            ),
-          ],
+              _menuItem(
+                icon: Icons.event_note_outlined,
+                title: 'My Bookings',
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const MyBookingsPage()),
+                  );
+                },
+              ),
+              _menuItem(
+                icon: Icons.help_outline,
+                title: 'Help Center',
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const HelpCenterView()),
+                  );
+                },
+              ),
+
+              const SizedBox(height: 30),
+
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () async {
+                    await auth.logout();
+                    if (context.mounted) {
+                      context.go('/car');
+                    }
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.sunYellow,
+                    foregroundColor: Colors.black,
+                    elevation: 0,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(24),
+                    ),
+                  ),
+                  child: const Text(
+                    'Log Out',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
-
-      // ✅ هنا مكان البار السفلي
-      bottomNavigationBar: const CustomBottomNavBar(currentIndex: 3),
     );
   }
 
-  // 🔹 ويدجت صغيرة مرتبة لعرض معلومات المستخدم
-  Widget _infoTile(IconData icon, String label, String value) {
+  Widget _menuItem({
+    required IconData icon,
+    required String title,
+    required VoidCallback onTap,
+  }) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6),
+      padding: const EdgeInsets.only(bottom: 12),
       child: Container(
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(18),
           boxShadow: const [
             BoxShadow(
               color: AppColors.shadow,
@@ -115,16 +241,17 @@ class ProfileView extends StatelessWidget {
         child: ListTile(
           leading: Icon(icon, color: AppColors.textPrimary),
           title: Text(
-            label,
+            title,
             style: const TextStyle(
               fontWeight: FontWeight.w600,
               color: AppColors.textPrimary,
             ),
           ),
-          trailing: Text(
-            value,
-            style: const TextStyle(color: AppColors.textSecondary),
+          trailing: const Icon(
+            Icons.chevron_right_rounded,
+            color: AppColors.textSecondary,
           ),
+          onTap: onTap,
         ),
       ),
     );

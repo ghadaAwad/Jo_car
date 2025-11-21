@@ -1,10 +1,15 @@
-import 'dart:io';
+import 'dart:io' show File;
+import 'dart:typed_data';
+import 'package:image_picker/image_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:image_picker/image_picker.dart';
 import '../../core/config/app_colors.dart';
-import '../../widgets/custom_bottom_nav.dart';
-import '../../models/car.dart'; // ✅ موديل السيارة
+import 'package:provider/provider.dart';
+import '../../features/auth/providers/car_provider.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import '../../services/car_service.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/foundation.dart';
 
 class AddCarView extends StatefulWidget {
   const AddCarView({super.key});
@@ -16,7 +21,6 @@ class AddCarView extends StatefulWidget {
 class _AddCarViewState extends State<AddCarView> {
   final _formKey = GlobalKey<FormState>();
 
-  //  Controllers
   final _makeController = TextEditingController();
   final _modelController = TextEditingController();
   final _yearController = TextEditingController();
@@ -30,17 +34,24 @@ class _AddCarViewState extends State<AddCarView> {
   final _rateController = TextEditingController();
   final _statusController = TextEditingController();
 
-  File? _selectedImage;
+  final carService = CarService();
 
-  // 📸 Pick Image
+  XFile? _selectedImage;
+  Uint8List? _imageBytes;
+
   Future<void> _pickImage() async {
-    final ImagePicker picker = ImagePicker();
-    final XFile? pickedFile = await picker.pickImage(
+    final picker = ImagePicker();
+    final pickedFile = await picker.pickImage(
       source: ImageSource.gallery,
       imageQuality: 80,
     );
+
     if (pickedFile != null) {
-      setState(() => _selectedImage = File(pickedFile.path));
+      final bytes = await pickedFile.readAsBytes();
+      setState(() {
+        _selectedImage = pickedFile;
+        _imageBytes = bytes;
+      });
     }
   }
 
@@ -70,7 +81,6 @@ class _AddCarViewState extends State<AddCarView> {
           key: _formKey,
           child: Column(
             children: [
-              // ===== Upload Image Card =====
               GestureDetector(
                 onTap: _pickImage,
                 child: Container(
@@ -111,17 +121,17 @@ class _AddCarViewState extends State<AddCarView> {
                         )
                       : ClipRRect(
                           borderRadius: BorderRadius.circular(16),
-                          child: Image.file(
-                            _selectedImage!,
-                            fit: BoxFit.cover,
-                            width: double.infinity,
-                          ),
+                          child: kIsWeb
+                              ? Image.memory(_imageBytes!, fit: BoxFit.cover)
+                              : Image.file(
+                                  File(_selectedImage!.path),
+                                  fit: BoxFit.cover,
+                                ),
                         ),
                 ),
               ),
               const SizedBox(height: 25),
 
-              // ===== All Input Fields =====
               _buildInput(_makeController, 'Make (Brand)', Icons.local_offer),
               _buildInput(_modelController, 'Model', Icons.directions_car),
               _buildInput(
@@ -133,12 +143,12 @@ class _AddCarViewState extends State<AddCarView> {
               _buildInput(
                 _plateController,
                 'Plate Number',
-                Icons.confirmation_number_outlined,
+                Icons.confirmation_number,
               ),
               _buildInput(_colorController, 'Color', Icons.color_lens),
               _buildInput(
                 _transmissionController,
-                'Transmission Type',
+                'Transmission',
                 Icons.settings,
               ),
               _buildInput(
@@ -161,24 +171,23 @@ class _AddCarViewState extends State<AddCarView> {
               _buildInput(
                 _mileageController,
                 'Mileage (km)',
-                Icons.speed_outlined,
+                Icons.speed,
                 type: TextInputType.number,
               ),
               _buildInput(
                 _rateController,
                 'Daily Rate (\$)',
-                Icons.attach_money,
+                Icons.attach_money_outlined,
                 type: TextInputType.number,
               ),
               _buildInput(
                 _statusController,
-                'Status (Available / Rented)',
-                Icons.info_outline,
+                'Status',
+                Icons.info_outline_rounded,
               ),
 
               const SizedBox(height: 30),
 
-              // ===== Add Button =====
               SizedBox(
                 width: double.infinity,
                 height: 55,
@@ -201,11 +210,9 @@ class _AddCarViewState extends State<AddCarView> {
           ),
         ),
       ),
-      bottomNavigationBar: const CustomBottomNavBar(currentIndex: 1),
     );
   }
 
-  // ===== TextField Builder =====
   Widget _buildInput(
     TextEditingController controller,
     String label,
@@ -228,55 +235,57 @@ class _AddCarViewState extends State<AddCarView> {
             borderRadius: BorderRadius.circular(14),
             borderSide: BorderSide.none,
           ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(14),
-            borderSide: const BorderSide(color: AppColors.sunYellow, width: 2),
-          ),
         ),
       ),
     );
   }
 
-  // ===== When Add Car Pressed =====
-  void _onAddCar() {
+  Future<void> _onAddCar() async {
     if (!_formKey.currentState!.validate()) return;
-    if (_selectedImage == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please upload a car image')),
-      );
+
+    if (_imageBytes == null) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Upload an image')));
       return;
     }
 
-    final newCar = Car(
-      provider_id: 1, // 🔸 مؤقتًا (ممكن تاخده من AuthProvider)
+    final uid = FirebaseAuth.instance.currentUser!.uid;
+
+    // Get provider name
+    final userDoc = await FirebaseFirestore.instance
+        .collection('users')
+        .doc(uid)
+        .get();
+
+    final providerName = userDoc.data()?['name'] ?? 'Unknown';
+
+    await carService.addCar(
       make: _makeController.text.trim(),
       model: _modelController.text.trim(),
       year: int.parse(_yearController.text.trim()),
-      plate_number: _plateController.text.trim(),
+      plateNumber: _plateController.text.trim(),
       color: _colorController.text.trim(),
-      imageUrl: _selectedImage!.path,
       transmission: _transmissionController.text.trim(),
-      fuel_type: _fuelTypeController.text.trim(),
+      fuelType: _fuelTypeController.text.trim(),
       seats: int.parse(_seatsController.text.trim()),
       doors: int.parse(_doorsController.text.trim()),
-      mileage_km: int.parse(_mileageController.text.trim()),
+      mileageKm: int.parse(_mileageController.text.trim()),
       status: _statusController.text.trim(),
-      daily_rate: int.parse(_rateController.text.trim()),
-      created_at: DateTime.now(),
+      dailyRate: double.parse(_rateController.text.trim()),
+      providerId: uid,
+      providerName: providerName,
+      imageBytes: _imageBytes!,
     );
 
-    // 🔸 عرض رسالة نجاح
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        backgroundColor: AppColors.sunYellow,
-        content: Text(
-          '🚗 ${newCar.make} ${newCar.model} added successfully!',
-          style: const TextStyle(color: Colors.black),
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Car Added Successfully!"),
+          backgroundColor: AppColors.sunYellow,
         ),
-      ),
-    );
-
-    // 🔸 رجوع للصفحة الرئيسية
-    context.go('/home');
+      );
+      context.go('/home');
+    }
   }
 }

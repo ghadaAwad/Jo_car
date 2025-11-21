@@ -27,7 +27,6 @@ class _RegisterViewState extends State<RegisterView> {
   final _confirmPassword = TextEditingController();
 
   String _selectedType = 'User';
-  String _selectedStatus = 'Active';
 
   @override
   void dispose() {
@@ -77,7 +76,6 @@ class _RegisterViewState extends State<RegisterView> {
                       ),
                       const SizedBox(height: 40),
 
-                      // ======== FIRST NAME + LAST NAME ========
                       Row(
                         children: [
                           Expanded(
@@ -99,7 +97,6 @@ class _RegisterViewState extends State<RegisterView> {
                       ),
                       const SizedBox(height: 10),
 
-                      // ======== OTHER FIELDS ========
                       _buildInput(
                         _email,
                         'Email',
@@ -143,7 +140,6 @@ class _RegisterViewState extends State<RegisterView> {
                       ),
                       const SizedBox(height: 15),
 
-                      // ======== USER TYPE BUTTONS ========
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                         children: [
@@ -153,35 +149,8 @@ class _RegisterViewState extends State<RegisterView> {
                       ),
                       const SizedBox(height: 15),
 
-                      // ======== STATUS DROPDOWN ========
-                      DropdownButtonFormField<String>(
-                        value: _selectedStatus,
-                        decoration: InputDecoration(
-                          labelText: 'Status',
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(20.0),
-                          ),
-                          focusedBorder: const OutlineInputBorder(
-                            borderSide: BorderSide(
-                              color: Color(0xFFFDD853),
-                              width: 2.0,
-                            ),
-                          ),
-                        ),
-                        items: ['Active', 'Inactive']
-                            .map(
-                              (status) => DropdownMenuItem(
-                                value: status,
-                                child: Text(status),
-                              ),
-                            )
-                            .toList(),
-                        onChanged: (val) =>
-                            setState(() => _selectedStatus = val!),
-                      ),
                       const SizedBox(height: 30),
 
-                      // ======== REGISTER BUTTON ========
                       SizedBox(
                         height: 50,
                         width: 300,
@@ -200,7 +169,6 @@ class _RegisterViewState extends State<RegisterView> {
                                       'username': _username.text.trim(),
                                       'password': _password.text.trim(),
                                       'type': _selectedType,
-                                      'status': _selectedStatus,
                                     });
 
                                     if (auth.isAuthenticated &&
@@ -240,7 +208,6 @@ class _RegisterViewState extends State<RegisterView> {
                       ),
                       const SizedBox(height: 25),
 
-                      // ======== ALREADY HAVE ACCOUNT ========
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
@@ -271,7 +238,6 @@ class _RegisterViewState extends State<RegisterView> {
     );
   }
 
-  // ======== INPUT BUILDER ========
   Widget _buildInput(
     TextEditingController controller,
     String label,
@@ -298,7 +264,6 @@ class _RegisterViewState extends State<RegisterView> {
     );
   }
 
-  // ======== TYPE BUTTON BUILDER ========
   Widget _buildTypeButton(String type) {
     final bool isSelected = _selectedType == type;
     return GestureDetector(

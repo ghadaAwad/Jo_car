@@ -1,134 +1,244 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
-import '../../core/config/app_colors.dart';
-import '../../features/auth/providers/auth_provider.dart';
-import '../../widgets/custom_bottom_nav.dart';
+import '../../../models/car.dart';
+import '../../features/auth/providers/car_provider.dart';
+import '../../../core/config/app_colors.dart';
+import 'package:go_router/go_router.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
-class DashboardView extends StatelessWidget {
-  const DashboardView({super.key});
+class ProviderDashboardView extends StatefulWidget {
+  const ProviderDashboardView({super.key});
+
+  @override
+  State<ProviderDashboardView> createState() => _ProviderDashboardViewState();
+}
+
+class _ProviderDashboardViewState extends State<ProviderDashboardView> {
+  @override
+  void initState() {
+    super.initState();
+
+    /// تحميل سيارات المزود الحالي فقط
+    Future.microtask(() {
+      context.read<CarProvider>().fetchProviderCars();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
-    final auth = Provider.of<AuthProvider>(context);
-    final username = auth.userEmail?.split('@').first ?? 'Provider';
+    final carProvider = context.watch<CarProvider>();
+    final cars = carProvider.providerCars;
 
     return Scaffold(
-      backgroundColor: AppColors.bg,
       appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        title: Text(
-          'Welcome, $username 👋',
-          style: const TextStyle(
-            color: AppColors.textPrimary,
-            fontWeight: FontWeight.bold,
-            fontSize: 20,
+        title: const Text(
+          'My Cars Dashboard',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
+        centerTitle: true,
+        backgroundColor: AppColors.sunYellow,
+        foregroundColor: Colors.black,
+      ),
+
+      body: AnimatedSwitcher(
+        duration: const Duration(milliseconds: 400),
+        child: cars.isEmpty
+            ? _buildEmptyState(context)
+            : ListView.builder(
+                key: const ValueKey('carList'),
+                padding: const EdgeInsets.all(16),
+                itemCount: cars.length,
+                itemBuilder: (context, index) {
+                  final car = cars[index];
+                  return _CarDashboardCard(car: car, index: index);
+                },
+              ),
+      ),
+
+      floatingActionButton: FloatingActionButton(
+        backgroundColor: AppColors.sunYellow,
+        foregroundColor: Colors.black,
+        onPressed: () {
+          context.push('/provider-dashboard/add-car');
+        },
+        child: const Icon(Icons.add),
+      ),
+    );
+  }
+
+  Widget _buildEmptyState(BuildContext context) {
+    return Center(
+      key: const ValueKey('empty'),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Icon(Icons.directions_car, size: 80, color: Colors.grey),
+          const SizedBox(height: 16),
+          const Text(
+            'No cars added yet',
+            style: TextStyle(fontSize: 18, color: Colors.grey),
           ),
-        ),
-        centerTitle: false,
+          const SizedBox(height: 12),
+          ElevatedButton.icon(
+            onPressed: () => context.push('/provider-dashboard/add-car'),
+            icon: const Icon(Icons.add),
+            label: const Text('Add Car'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.sunYellow,
+              foregroundColor: Colors.black,
+            ),
+          ),
+        ],
       ),
-
-      body: Padding(
-        padding: const EdgeInsets.all(20),
-        child: GridView.count(
-          crossAxisCount: 2,
-          crossAxisSpacing: 14,
-          mainAxisSpacing: 14,
-          childAspectRatio: 1.1,
-          children: [
-            _DashboardCard(
-              icon: Icons.add_box_rounded,
-              title: 'Add Car',
-              color: const Color(0xFFFFD54F),
-              onTap: () => context.push('/add-car'),
-            ),
-            _DashboardCard(
-              icon: Icons.directions_car_rounded,
-              title: 'Manage Cars',
-              color: const Color(0xFF80DEEA),
-              onTap: () => context.push('/manage-cars'),
-            ),
-            _DashboardCard(
-              icon: Icons.calendar_today_rounded,
-              title: 'Bookings',
-              color: const Color(0xFFA5D6A7),
-              onTap: () => context.push('/bookings'),
-            ),
-            _DashboardCard(
-              icon: Icons.attach_money_rounded,
-              title: 'Earnings',
-              color: const Color(0xFFEF9A9A),
-              onTap: () => context.push('/earnings'),
-            ),
-          ],
-        ),
-      ),
-
-      // ✅ شريط التنقل السفلي المشترك
-      bottomNavigationBar: const CustomBottomNavBar(currentIndex: 2),
     );
   }
 }
 
-class _DashboardCard extends StatefulWidget {
-  final IconData icon;
-  final String title;
-  final Color color;
-  final VoidCallback onTap;
+class _CarDashboardCard extends StatefulWidget {
+  final Car car;
+  final int index;
 
-  const _DashboardCard({
-    required this.icon,
-    required this.title,
-    required this.color,
-    required this.onTap,
-  });
+  const _CarDashboardCard({required this.car, required this.index});
 
   @override
-  State<_DashboardCard> createState() => _DashboardCardState();
+  State<_CarDashboardCard> createState() => _CarDashboardCardState();
 }
 
-class _DashboardCardState extends State<_DashboardCard> {
-  bool _pressed = false;
+class _CarDashboardCardState extends State<_CarDashboardCard>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _scaleAnim;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 250),
+    );
+    _scaleAnim = Tween<double>(begin: 1.0, end: 0.96).animate(_controller);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _onTapDown(_) => _controller.forward();
+  void _onTapUp(_) => _controller.reverse();
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTapDown: (_) => setState(() => _pressed = true),
-      onTapUp: (_) {
-        setState(() => _pressed = false);
-        Future.delayed(const Duration(milliseconds: 100), widget.onTap);
-      },
-      onTapCancel: () => setState(() => _pressed = false),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 150),
-        decoration: BoxDecoration(
-          color: widget.color.withOpacity(_pressed ? 0.8 : 1),
-          borderRadius: BorderRadius.circular(18),
-          boxShadow: _pressed
-              ? []
-              : [
-                  BoxShadow(
-                    color: widget.color.withOpacity(0.4),
-                    blurRadius: 12,
-                    offset: const Offset(0, 6),
-                  ),
-                ],
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(widget.icon, size: 48, color: Colors.white),
-            const SizedBox(height: 10),
-            Text(
-              widget.title,
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-              ),
+    final carProvider = context.read<CarProvider>();
+    final car = widget.car;
+
+    return ScaleTransition(
+      scale: _scaleAnim,
+      child: GestureDetector(
+        onTapDown: _onTapDown,
+        onTapUp: _onTapUp,
+        onTapCancel: _controller.reverse,
+        child: Card(
+          margin: const EdgeInsets.only(bottom: 16),
+          elevation: 6,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Container(
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(20),
+              color: Colors.white,
+              boxShadow: const [
+                BoxShadow(
+                  color: AppColors.shadow,
+                  blurRadius: 12,
+                  offset: Offset(0, 4),
+                ),
+              ],
             ),
-          ],
+            child: Row(
+              children: [
+                /// صورة السيارة
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(14),
+                  child: Image.network(
+                    car.imageUrl.isNotEmpty
+                        ? car.imageUrl
+                        : 'https://cdn-icons-png.flaticon.com/512/744/744465.png',
+                    width: 100,
+                    height: 80,
+                    fit: BoxFit.cover,
+                  ),
+                ),
+
+                const SizedBox(width: 14),
+
+                /// معلومات السيارة
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        '${car.make} ${car.model}',
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        '${car.year} • ${car.color}',
+                        style: const TextStyle(
+                          color: AppColors.textSecondary,
+                          fontSize: 13,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        '\$${car.daily_rate}/day',
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 14,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                /// أزرار التحكم
+                Column(
+                  children: [
+                    /// حذف
+                    IconButton(
+                      onPressed: () async {
+                        await carProvider.deleteCar(car);
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Car removed successfully ✅'),
+                          ),
+                        );
+                      },
+                      icon: const Icon(Icons.delete_outline, color: Colors.red),
+                    ),
+
+                    /// تعديل
+                    IconButton(
+                      onPressed: () {
+                        context.push(
+                          '/provider-dashboard/edit-car',
+                          extra: car,
+                        );
+                      },
+
+                      icon: const Icon(Icons.edit, color: Colors.blueAccent),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
         ),
       ),
     );
