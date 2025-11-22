@@ -18,6 +18,9 @@ class BookingProvider extends ChangeNotifier {
       notifyListeners();
 
       final data = booking.toMap();
+
+      data["createdAt"] = FieldValue.serverTimestamp();
+
       await _db.collection('bookings').add(data);
 
       _loading = false;
@@ -25,9 +28,7 @@ class BookingProvider extends ChangeNotifier {
     } catch (e) {
       _loading = false;
       notifyListeners();
-      if (kDebugMode) {
-        print('🔥 Error creating booking: $e');
-      }
+      debugPrint('🔥 Error creating booking: $e');
       rethrow;
     }
   }
@@ -50,14 +51,13 @@ class BookingProvider extends ChangeNotifier {
           )
           .toList();
     } catch (e) {
-      debugPrint("🔥 Error loading user bookings: $e");
+      debugPrint(" Error loading user bookings: $e");
       return [];
     }
   }
 
-  /// إنشاء جلسة دفع Stripe عبر Cloud Function
   Future<String?> createStripePayment({
-    required int amount, // بالسنت
+    required int amount,
     required String carId,
     required String userEmail,
     String currency = "usd",
@@ -79,10 +79,10 @@ class BookingProvider extends ChangeNotifier {
         return data['url'] as String;
       }
 
-      debugPrint("⚠️ Unexpected createCheckoutSession response: $data");
+      debugPrint(" Unexpected createCheckoutSession response: $data");
       return null;
     } catch (e) {
-      debugPrint("🔥 Payment error: $e");
+      debugPrint(" Payment error: $e");
       return null;
     }
   }

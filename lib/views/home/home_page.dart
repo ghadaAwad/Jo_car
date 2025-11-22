@@ -152,9 +152,6 @@ class _HomePageState extends State<HomePage> {
             )
             .toList();
 
-        // ------------------------------------------------------------------
-        // 🔍 فلترة السيرش الجديدة — بدون ما ألمس أي شي من كودك
-        // ------------------------------------------------------------------
         final q = searchQuery.trim().toLowerCase();
         final filteredCars = q.isEmpty
             ? cars
@@ -173,7 +170,6 @@ class _HomePageState extends State<HomePage> {
                     color.contains(q) ||
                     fuel.contains(q);
               }).toList();
-        // ------------------------------------------------------------------
 
         final providersMap = <String, List<Car>>{};
         for (var car in filteredCars) {

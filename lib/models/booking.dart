@@ -1,34 +1,30 @@
 // lib/models/booking.dart
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 class Booking {
   final String? id;
 
-  // روابط
   final String userId;
   final String providerId;
   final String carId;
 
-  // بيانات اليوزر
   final String userName;
   final String userEmail;
   final String userPhone;
 
-  // موقع الحجز
   final double latitude;
   final double longitude;
 
-  // تواريخ ومدد
   final DateTime startDate;
   final int days;
   DateTime get endDate => startDate.add(Duration(days: days));
 
-  // فلوس
   final double dailyRate;
   double get totalPrice => dailyRate * days;
 
-  final String paymentMethod; // 'cash' or 'payment'
+  final String paymentMethod;
   final DateTime createdAt;
 
-  // سناب شوت السيارة (عشان نظهرها بسهولة)
   final String carImageUrl;
   final String carMake;
   final String carModel;
@@ -93,7 +89,12 @@ class Booking {
       days: (map['days'] ?? 1).toInt(),
       dailyRate: (map['dailyRate'] ?? 0).toDouble(),
       paymentMethod: map['paymentMethod'] ?? 'cash',
-      createdAt: DateTime.tryParse(map['createdAt'] ?? '') ?? DateTime.now(),
+
+      // ✅ أهم تعديل
+      createdAt: (map['createdAt'] is Timestamp)
+          ? (map['createdAt'] as Timestamp).toDate()
+          : DateTime.tryParse(map['createdAt'] ?? '') ?? DateTime.now(),
+
       carImageUrl: map['carImageUrl'] ?? '',
       carMake: map['carMake'] ?? '',
       carModel: map['carModel'] ?? '',

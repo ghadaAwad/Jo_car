@@ -29,6 +29,7 @@ class _ProviderBookingsPageState extends State<ProviderBookingsPage> {
 
   Future<void> _loadProvider() async {
     providerId = _auth.currentUser?.uid;
+
     setState(() => loading = false);
   }
 
@@ -44,8 +45,14 @@ class _ProviderBookingsPageState extends State<ProviderBookingsPage> {
 
   @override
   Widget build(BuildContext context) {
-    if (loading || providerId == null) {
+    if (loading) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
+
+    if (providerId == null) {
+      return const Scaffold(
+        body: Center(child: Text("خطأ: لا يوجد معرف للمزوّد")),
+      );
     }
 
     return Scaffold(
@@ -61,6 +68,10 @@ class _ProviderBookingsPageState extends State<ProviderBookingsPage> {
             .orderBy("createdAt", descending: true)
             .snapshots(),
         builder: (context, snap) {
+          if (snap.hasError) {
+            return Center(child: Text("خطأ في التحميل: ${snap.error}"));
+          }
+
           if (!snap.hasData) {
             return const Center(child: CircularProgressIndicator());
           }
@@ -87,7 +98,7 @@ class _ProviderBookingsPageState extends State<ProviderBookingsPage> {
               children: [
                 if (pending.isNotEmpty) ...[
                   const Text(
-                    "بانتظار الموافقة",
+                    "pending to confirmed",
                     style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900),
                   ),
                   const SizedBox(height: 12),
@@ -152,15 +163,15 @@ class BookingCard extends StatelessWidget {
   String statusText(String s) {
     switch (s) {
       case "pending":
-        return "بانتظار الموافقة";
+        return "pending to confirmed ";
       case "confirmed":
-        return "تم التأكيد";
+        return "confirmed ";
       case "active":
-        return "محجوز حالياً";
+        return "rent now";
       case "completed":
-        return "منتهي";
+        return "completed";
       case "canceled":
-        return "ملغى";
+        return "canceled";
       default:
         return s;
     }
@@ -205,12 +216,10 @@ class BookingCard extends StatelessWidget {
 
             const SizedBox(width: 12),
 
-            // معلومات الحجز
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // اسم + حالة
                   Row(
                     children: [
                       Expanded(
@@ -244,23 +253,20 @@ class BookingCard extends StatelessWidget {
                   ),
 
                   const SizedBox(height: 4),
-
                   Text(
                     "${booking.carMake} ${booking.carModel}",
                     style: const TextStyle(fontSize: 13),
                   ),
 
                   const SizedBox(height: 4),
-
                   Text(
-                    "من ${booking.startDate.day}/${booking.startDate.month} "
-                    "إلى ${booking.endDate.day}/${booking.endDate.month} "
-                    "(${booking.days} يوم)",
+                    "at ${booking.startDate.day}/${booking.startDate.month} "
+                    "to ${booking.endDate.day}/${booking.endDate.month} "
+                    "(${booking.days} day)",
                     style: const TextStyle(fontSize: 12, color: Colors.black87),
                   ),
 
                   const SizedBox(height: 4),
-
                   Text(
                     "الإجمالي: ${total.toStringAsFixed(2)}",
                     style: const TextStyle(
@@ -283,7 +289,7 @@ class BookingCard extends StatelessWidget {
                               ),
                             ),
                             onPressed: onAccept,
-                            child: const Text("قبول"),
+                            child: const Text("recpect"),
                           ),
                         ),
                         const SizedBox(width: 10),
@@ -297,7 +303,7 @@ class BookingCard extends StatelessWidget {
                             ),
                             onPressed: onCancel,
                             child: const Text(
-                              "رفض",
+                              "cancle",
                               style: TextStyle(color: Colors.red),
                             ),
                           ),

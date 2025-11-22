@@ -100,3 +100,50 @@ exports.notifyProviderOnBooking = functions.firestore
 
     return true;
   });
+// ------------------------------
+// 🔄 Auto Update Booking Status
+// ------------------------------
+exports.updateBookingsStatus = functions.pubsub
+  .schedule("every 30 minutes")
+  .timeZone("Asia/Amman")
+  .onRun(async (context) => {
+    const now = new Date();
+
+    const snap = await admin.firestore().collection("bookings").get();
+    const batch = admin.firestore().batch();
+
+    snap.forEach((doc) => {
+      const data = doc.data();
+
+      const startStr = data.startDate; // stored as ISO string
+      const days = data.days || 1;
+      const status = data.status || "pending";
+
+      if (!startStr) return;
+
+      const start = new Date(startStr);
+      const end = new Date(start);
+      end.setDate(end.getDate() + days);
+
+      let newStatus = status;
+
+      if (status !== "canceled") {
+        if (now > end) {
+          newStatus = "completed";
+        } else if (now >= start && now <= end) {
+          newStatus = "active";
+        } else {
+          // قبل الحجز
+          // pending و confirmed بنخليهم زي ما هم
+        }
+      }
+
+      if (newStatus !== status) {
+        batch.update(doc.ref, { status: newStatus });
+      }
+    });
+
+    await batch.commit();
+    console.log("✅ Bookings auto-updated successfully!");
+    return null;
+  });

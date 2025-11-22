@@ -73,9 +73,6 @@ class BookingDetailsPage extends StatelessWidget {
 
             const SizedBox(height: 26),
 
-            // ================================
-            // 🔥 ACTION BUTTONS
-            // ================================
             _actionButton(
               label: 'Show Location on Map',
               icon: Icons.map_outlined,
@@ -137,9 +134,6 @@ class BookingDetailsPage extends StatelessWidget {
     );
   }
 
-  // ============================
-  // 🔥 UNIVERSAL BUTTON WIDGET
-  // ============================
   Widget _actionButton({
     required String label,
     required IconData icon,
@@ -162,9 +156,6 @@ class BookingDetailsPage extends StatelessWidget {
     );
   }
 
-  // ============================
-  // 🔵 OPEN MAP
-  // ============================
   void _openMap(double lat, double lng) async {
     final url = Uri.parse("https://www.google.com/maps?q=$lat,$lng");
     if (await canLaunchUrl(url)) {
@@ -172,9 +163,6 @@ class BookingDetailsPage extends StatelessWidget {
     }
   }
 
-  // ============================
-  // 📞 CALL PROVIDER
-  // ============================
   void _callNumber(String phone) async {
     final url = Uri.parse("tel:$phone");
     if (await canLaunchUrl(url)) {
@@ -182,9 +170,6 @@ class BookingDetailsPage extends StatelessWidget {
     }
   }
 
-  // ============================
-  // ❌ CONFIRM CANCEL
-  // ============================
   Future<bool> _confirm(BuildContext context) async {
     return await showDialog(
           context: context,

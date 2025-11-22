@@ -27,7 +27,6 @@ class CarService {
     required double dailyRate,
   }) async {
     try {
-      // رفع الصورة
       String fileName =
           "cars/${providerId}-${DateTime.now().millisecondsSinceEpoch}.jpg";
 
@@ -38,7 +37,6 @@ class CarService {
       TaskSnapshot snapshot = await uploadTask;
       String imageUrl = await snapshot.ref.getDownloadURL();
 
-      // حفظ السيارة في Firestore
       await firestore.collection("cars").add({
         "make": make,
         "model": model,
@@ -64,7 +62,7 @@ class CarService {
 
       print("🚗 Car added successfully!");
     } catch (e) {
-      print("🔥 Error adding car: $e");
+      print(" Error adding car: $e");
       rethrow;
     }
   }

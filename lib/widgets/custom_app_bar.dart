@@ -8,8 +8,12 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
 
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+
+    final iconSize = screenWidth * 0.085;
+
     return AppBar(
-      backgroundColor: Colors.black.withOpacity(0.55), // 🔥 اسود شفاف حقيقي
+      backgroundColor: Colors.black.withOpacity(0.55),
       elevation: 0,
       centerTitle: true,
 
@@ -25,16 +29,8 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
       leading: GestureDetector(
         onTap: onMenuTap,
         child: Padding(
-          padding: const EdgeInsets.symmetric(
-            horizontal: 6, // 🔥 أقل Padding = اللوجو يكبر فعليًا
-            vertical: 4,
-          ),
-          child: Image.asset(
-            "assets/images/LOGO.png",
-            fit: BoxFit.contain,
-            width: 55, // 🔥 مكبّر بشكل محترم
-            height: 55,
-          ),
+          padding: const EdgeInsets.symmetric(horizontal: 10),
+          child: Icon(Icons.menu, size: iconSize, color: Colors.white),
         ),
       ),
     );

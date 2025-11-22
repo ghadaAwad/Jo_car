@@ -28,10 +28,9 @@ class ProviderCarsView extends StatelessWidget {
         onMenuTap: () => Navigator.pop(context),
       ),
 
-      // 🔥 إضافة المسافة فقط
       body: Column(
         children: [
-          const SizedBox(height: 12), // ← المسافة بين AppBar والمحتوى
+          const SizedBox(height: 12),
 
           Expanded(
             child: StreamBuilder<QuerySnapshot>(
@@ -52,9 +51,7 @@ class ProviderCarsView extends StatelessWidget {
                 final docs = snapshot.data!.docs;
 
                 if (docs.isEmpty) {
-                  return const Center(
-                    child: Text("لا يوجد سيارات لهذا المعرض."),
-                  );
+                  return const Center(child: Text("no cars in this provider"));
                 }
 
                 final cars = docs.map((d) {

@@ -22,7 +22,7 @@ class CarCard extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        width: 190, // 🔥 تصغير الكارد آمن
+        width: 190,
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(18),
@@ -38,13 +38,12 @@ class CarCard extends StatelessWidget {
           children: [
             Column(
               children: [
-                // 🔥 إصلاح السايز بشكل نهائي ومنع أي overflow
                 ClipRRect(
                   borderRadius: const BorderRadius.vertical(
                     top: Radius.circular(18),
                   ),
                   child: AspectRatio(
-                    aspectRatio: 16 / 11, // 🔥 ثابت ويمنع التمدد
+                    aspectRatio: 16 / 11,
                     child: Image.network(
                       car.imageUrl ?? "",
                       fit: BoxFit.cover,
@@ -56,7 +55,6 @@ class CarCard extends StatelessWidget {
                   ),
                 ),
 
-                // النصوص
                 Padding(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 12,
@@ -88,7 +86,6 @@ class CarCard extends StatelessWidget {
 
                       const SizedBox(height: 8),
 
-                      // Availability يظهر فقط للصفحات اللي مش home
                       if (showAvailability)
                         Container(
                           padding: const EdgeInsets.symmetric(

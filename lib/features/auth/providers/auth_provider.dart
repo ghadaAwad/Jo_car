@@ -35,19 +35,19 @@ class AuthProvider extends ChangeNotifier {
 
     try {
       await _auth.signInWithEmailAndPassword(email: email, password: password);
+
       final user = _auth.currentUser;
 
       if (user != null) {
-        final doc = await _firestore.collection('users').doc(user.uid).get();
-
         _isAuthenticated = true;
         _userEmail = user.email;
-        _userType = doc.data()?['type'] ?? 'User';
 
-        _userData = {
-          ...doc.data()!,
-          'photoUrl': doc.data()?['photoUrl'], // <-- FIX
-        };
+        final doc = await _firestore.collection('users').doc(user.uid).get();
+        final data = doc.data() ?? {};
+
+        _userType = data['type'] ?? 'User';
+
+        _userData = {...data, 'imageUrl': data['imageUrl'] ?? ''};
 
         await _storage.write('logged_in', 'true');
         await _storage.write('user_email', _userEmail!);
@@ -85,10 +85,10 @@ class AuthProvider extends ChangeNotifier {
           'username': data['username'],
           'type': data['type'],
           'createdAt': FieldValue.serverTimestamp(),
-          'photoUrl': null, // <-- FIX
+          'imageUrl': '', // 🔥 إضافة الصورة فاضية
         });
 
-        _userData = {...data, 'photoUrl': null};
+        _userData = {...data, 'imageUrl': ''};
 
         _isAuthenticated = true;
         _userEmail = user.email;
@@ -109,6 +109,7 @@ class AuthProvider extends ChangeNotifier {
     _isAuthenticated = false;
     _loading = false;
     notifyListeners();
+
     return false;
   }
 
@@ -119,6 +120,7 @@ class AuthProvider extends ChangeNotifier {
 
       final google = GoogleSignIn();
       final googleUser = await google.signIn();
+
       if (googleUser == null) {
         _loading = false;
         notifyListeners();
@@ -136,17 +138,17 @@ class AuthProvider extends ChangeNotifier {
 
       if (user != null) {
         final doc = await _firestore.collection('users').doc(user.uid).get();
+
         if (!doc.exists) {
           await _auth.signOut();
           throw Exception("NO_ACCOUNT");
         }
 
-        _userData = {
-          ...doc.data()!,
-          'photoUrl': doc.data()?['photoUrl'], // <-- FIX
-        };
+        final data = doc.data() ?? {};
 
-        _userType = doc.data()?['type'] ?? 'User';
+        _userData = {...data, 'imageUrl': data['imageUrl'] ?? ''};
+
+        _userType = data['type'] ?? 'User';
         _userEmail = user.email;
         _isAuthenticated = true;
 
@@ -167,6 +169,7 @@ class AuthProvider extends ChangeNotifier {
 
   Future<void> logout() async {
     await _auth.signOut();
+
     try {
       await GoogleSignIn().signOut();
     } catch (_) {}
@@ -197,11 +200,9 @@ class AuthProvider extends ChangeNotifier {
 
       if (uid != null) {
         final snap = await _firestore.collection('users').doc(uid).get();
+        final data = snap.data() ?? {};
 
-        _userData = {
-          ...snap.data() ?? {},
-          'photoUrl': snap.data()?['photoUrl'], // <-- FIX
-        };
+        _userData = {...data, 'imageUrl': data['imageUrl'] ?? ''};
       }
     } else {
       _isAuthenticated = false;

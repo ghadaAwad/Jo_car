@@ -26,7 +26,7 @@ class CarBookingsDetailsScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: const Color(0xFF020617),
       appBar: AppBar(
-        title: const Text("تفاصيل السيارة"),
+        title: const Text(" Details car"),
         backgroundColor: Colors.transparent,
         elevation: 0,
       ),
@@ -60,7 +60,7 @@ class CarBookingsDetailsScreen extends StatelessWidget {
           ),
 
           Text(
-            "لوحة: ${car["plate_number"]}",
+            ":plate_number ${car["plate_number"]}",
             style: const TextStyle(color: Colors.grey),
           ),
 
@@ -75,7 +75,7 @@ class CarBookingsDetailsScreen extends StatelessWidget {
               borderRadius: BorderRadius.circular(12),
             ),
             child: Text(
-              isRented ? "Rented Now · محجوزة" : "Available · غير محجوزة",
+              isRented ? "Rented Now · Rented" : "Available ·  Available",
               style: TextStyle(
                 color: isRented ? Colors.green : Colors.red,
                 fontWeight: FontWeight.bold,
@@ -85,7 +85,7 @@ class CarBookingsDetailsScreen extends StatelessWidget {
 
           const SizedBox(height: 20),
           const Text(
-            "الحجز الحالي",
+            " rent now",
             style: TextStyle(color: Colors.white, fontSize: 18),
           ),
           const SizedBox(height: 8),
@@ -93,14 +93,11 @@ class CarBookingsDetailsScreen extends StatelessWidget {
           if (currentBooking != null)
             _bookingCard(currentBooking!)
           else
-            const Text(
-              "لا يوجد حجز نشط حالياً",
-              style: TextStyle(color: Colors.grey),
-            ),
+            const Text("no rent now", style: TextStyle(color: Colors.grey)),
 
           const SizedBox(height: 30),
           const Text(
-            "جميع الحجوزات",
+            "All rent ",
             style: TextStyle(color: Colors.white, fontSize: 18),
           ),
           const SizedBox(height: 8),
@@ -126,11 +123,11 @@ class CarBookingsDetailsScreen extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _row("الاسم", booking["userName"]),
-          _row("الهاتف", booking["userPhone"]),
-          _row("الحالة", booking["status"]),
-          _row("البداية", start.toString()),
-          _row("النهاية", end.toString()),
+          _row("name", booking["userName"]),
+          _row("phone", booking["userPhone"]),
+          _row("state", booking["status"]),
+          _row("stert", start.toString()),
+          _row("end", end.toString()),
         ],
       ),
     );

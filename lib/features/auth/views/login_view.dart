@@ -158,7 +158,7 @@ class _LoginViewState extends State<LoginView> {
                         const SizedBox(height: 20),
 
                         const SizedBox(height: 20),
-                        SizedBox(
+                        /*       SizedBox(
                           height: 50,
                           width: 300,
                           child: OutlinedButton.icon(
@@ -197,7 +197,7 @@ class _LoginViewState extends State<LoginView> {
                               height: 24,
                               width: 24,
                             ),
-                            label: const Text(
+                           label: const Text(
                               'Sign in with Google',
                               style: TextStyle(
                                 fontWeight: FontWeight.bold,
@@ -212,7 +212,7 @@ class _LoginViewState extends State<LoginView> {
                             ),
                           ),
                         ),
-
+*/
                         Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [

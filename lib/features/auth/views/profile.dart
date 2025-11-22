@@ -43,14 +43,16 @@ class _ProfileViewState extends State<ProfileView>
   Widget build(BuildContext context) {
     final auth = Provider.of<AuthProvider>(context);
     final user = auth.user ?? {};
+
     final firstName = user['firstName'] ?? '';
     final lastName = user['lastName'] ?? '';
-    final fullName = '$firstName $lastName'.trim().isEmpty
+    final fullName = "$firstName $lastName".trim().isEmpty
         ? 'User'
-        : '$firstName $lastName'.trim();
+        : "$firstName $lastName".trim();
+
     final email = auth.userEmail ?? 'email@example.com';
     final phone = user['phone'] ?? 'Not set';
-    final photoUrl = (user['photoUrl'] ?? '')?.toString();
+    final imageUrl = (user['imageUrl'] ?? '').toString();
 
     return Scaffold(
       backgroundColor: AppColors.bg,
@@ -72,7 +74,6 @@ class _ProfileViewState extends State<ProfileView>
           padding: const EdgeInsets.all(24),
           child: Column(
             children: [
-              // صورة البروفايل + الاسم
               ScaleTransition(
                 scale: _scale,
                 child: Column(
@@ -85,18 +86,18 @@ class _ProfileViewState extends State<ProfileView>
                             builder: (_) => const EditProfileView(),
                           ),
                         );
-                        setState(() {}); // إعادة بناء بعد الرجوع
+
+                        setState(() {}); // refresh
                       },
                       child: Stack(
                         children: [
                           CircleAvatar(
-                            radius: 50,
+                            radius: 55,
                             backgroundColor: Colors.grey.shade300,
-                            backgroundImage:
-                                (photoUrl != null && photoUrl.trim().isNotEmpty)
-                                ? NetworkImage(photoUrl)
+                            backgroundImage: imageUrl.isNotEmpty
+                                ? NetworkImage(imageUrl)
                                 : null,
-                            child: (photoUrl == null || photoUrl.trim().isEmpty)
+                            child: imageUrl.isEmpty
                                 ? const Icon(
                                     Icons.person,
                                     size: 60,
@@ -104,6 +105,7 @@ class _ProfileViewState extends State<ProfileView>
                                   )
                                 : null,
                           ),
+
                           Positioned(
                             right: 0,
                             bottom: 0,
@@ -123,12 +125,13 @@ class _ProfileViewState extends State<ProfileView>
                         ],
                       ),
                     ),
-                    const SizedBox(height: 14),
+
+                    const SizedBox(height: 12),
                     Text(
                       fullName,
                       style: const TextStyle(
                         fontSize: 22,
-                        fontWeight: FontWeight.w800,
+                        fontWeight: FontWeight.bold,
                         color: AppColors.textPrimary,
                       ),
                     ),
@@ -140,7 +143,7 @@ class _ProfileViewState extends State<ProfileView>
                         color: AppColors.textSecondary,
                       ),
                     ),
-                    const SizedBox(height: 2),
+                    const SizedBox(height: 4),
                     Text(
                       phone,
                       style: const TextStyle(
@@ -152,7 +155,7 @@ class _ProfileViewState extends State<ProfileView>
                 ),
               ),
 
-              const SizedBox(height: 28),
+              const SizedBox(height: 30),
 
               _menuItem(
                 icon: Icons.settings_outlined,
@@ -166,15 +169,16 @@ class _ProfileViewState extends State<ProfileView>
                 },
               ),
               _menuItem(
-                icon: Icons.event_note_outlined,
-                title: 'My Bookings',
+                icon: Icons.calendar_month_outlined,
+                title: context.read<AuthProvider>().user?["type"] == "Provider"
+                    ? "Provider Bookings"
+                    : "My Bookings",
                 onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (_) => const MyBookingsPage()),
-                  );
+                  context.push("/booking-center");
+                  Navigator.pop(context);
                 },
               ),
+
               _menuItem(
                 icon: Icons.help_outline,
                 title: 'Help Center',
@@ -193,15 +197,12 @@ class _ProfileViewState extends State<ProfileView>
                 child: ElevatedButton(
                   onPressed: () async {
                     await auth.logout();
-                    if (context.mounted) {
-                      context.go('/car');
-                    }
+                    if (context.mounted) context.go('/car');
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.sunYellow,
                     foregroundColor: Colors.black,
-                    elevation: 0,
-                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    padding: const EdgeInsets.symmetric(vertical: 15),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(24),
                     ),

@@ -1,15 +1,15 @@
 import 'dart:typed_data';
-import 'dart:io' show File; // Mobile فقط
+import 'dart:io' show File;
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:firebase_auth/firebase_auth.dart' hide AuthProvider;
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_storage/firebase_storage.dart';
 
 import '../../../core/config/app_colors.dart';
 import '../providers/auth_provider.dart';
+import '../../../services/user_profile_service.dart';
 
 class EditProfileView extends StatefulWidget {
   const EditProfileView({super.key});
@@ -32,6 +32,8 @@ class _EditProfileViewState extends State<EditProfileView>
 
   late AnimationController _animController;
   late Animation<double> _imageScale;
+
+  final UserProfileService profileService = UserProfileService();
 
   @override
   void initState() {
@@ -68,7 +70,7 @@ class _EditProfileViewState extends State<EditProfileView>
   Widget build(BuildContext context) {
     final auth = Provider.of<AuthProvider>(context);
     final user = auth.user ?? {};
-    final photoUrl = (user['photoUrl'] ?? '')?.toString();
+    final imageUrl = (user['imageUrl'] ?? '').toString();
 
     ImageProvider? imageProvider;
 
@@ -76,8 +78,8 @@ class _EditProfileViewState extends State<EditProfileView>
       imageProvider = FileImage(_imageFileMobile!);
     } else if (_imageBytesWeb != null) {
       imageProvider = MemoryImage(_imageBytesWeb!);
-    } else if (photoUrl != null && photoUrl.trim().isNotEmpty) {
-      imageProvider = NetworkImage(photoUrl);
+    } else if (imageUrl.isNotEmpty) {
+      imageProvider = NetworkImage(imageUrl);
     }
 
     return Scaffold(
@@ -178,11 +180,7 @@ class _EditProfileViewState extends State<EditProfileView>
                     ),
                   ),
                   child: _saving
-                      ? const SizedBox(
-                          height: 22,
-                          width: 22,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
+                      ? const CircularProgressIndicator(strokeWidth: 2)
                       : const Text(
                           'Save Changes',
                           style: TextStyle(
@@ -232,12 +230,14 @@ class _EditProfileViewState extends State<EditProfileView>
 
     if (kIsWeb) {
       _imageBytesWeb = await picked.readAsBytes();
+      _imageFileMobile = null;
     } else {
       _imageFileMobile = File(picked.path);
+      _imageBytesWeb = null;
     }
 
-    _animController.forward(from: 0);
     setState(() {});
+    _animController.forward(from: 0);
   }
 
   Future<void> _saveProfile() async {
@@ -248,52 +248,27 @@ class _EditProfileViewState extends State<EditProfileView>
       _uploadProgress = 0;
     });
 
-    final auth = Provider.of<AuthProvider>(context, listen: false);
-    final uid = FirebaseAuth.instance.currentUser?.uid;
+    final uid = FirebaseAuth.instance.currentUser!.uid;
+    String? imageUrl;
 
-    if (uid == null) return;
-
-    final doc = FirebaseFirestore.instance.collection('users').doc(uid);
-
-    final fullName = _name.text.trim();
-    final parts = fullName.split(' ');
-    final firstName = parts.first;
-    final lastName = parts.length > 1 ? parts.sublist(1).join(' ') : '';
-
-    await doc.update({
-      'firstName': firstName,
-      'lastName': lastName,
-      'phone': _phone.text.trim(),
-    });
-
-    // رفع الصورة
     if (_imageBytesWeb != null || _imageFileMobile != null) {
-      final ref = FirebaseStorage.instance.ref().child(
-        'profile_images/$uid/profile.jpg',
+      imageUrl = await profileService.uploadProfileImage(
+        webImage: _imageBytesWeb,
+        mobileImage: _imageFileMobile,
       );
-
-      UploadTask uploadTask;
-
-      if (kIsWeb) {
-        uploadTask = ref.putData(_imageBytesWeb!);
-      } else {
-        uploadTask = ref.putFile(_imageFileMobile!);
-      }
-
-      uploadTask.snapshotEvents.listen((event) {
-        setState(() {
-          _uploadProgress = event.bytesTransferred / event.totalBytes;
-        });
-      });
-
-      final snapshot = await uploadTask.whenComplete(() {});
-      final url = await snapshot.ref.getDownloadURL();
-
-      await doc.set({'photoUrl': url}, SetOptions(merge: true));
     }
 
-    final snap = await doc.get();
-    auth.updateUser(snap.data() ?? {});
+    final names = _name.text.trim().split(' ');
+    final updated = await profileService.updateUserData(
+      firstName: names.first,
+      lastName: names.length > 1 ? names.sublist(1).join(' ') : '',
+      phone: _phone.text.trim(),
+      imageUrl: imageUrl,
+    );
+
+    if (updated != null) {
+      Provider.of<AuthProvider>(context, listen: false).updateUser(updated);
+    }
 
     setState(() {
       _saving = false;
